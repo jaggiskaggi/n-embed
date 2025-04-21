@@ -1,36 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BankWise Video</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinescope API Player</title>
+  <script src="https://player.kinescope.io/player.js" defer></script>
   <style>
-    body {
+    html, body {
       margin: 0;
       background: black;
-    }
-    .video-container {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%; /* 16:9 aspect ratio */
-    }
-    .video-container iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
       height: 100%;
-      border: 0;
+    }
+    #player {
+      width: 100%;
+      height: 100vh;
     }
   </style>
 </head>
 <body>
-  <div class="video-container">
-    <iframe
-      src="https://kinescope.io/embed/tS6ERUjiNAGudSTffXB5ym?watermark=©%202025%20BankWiseTrading.%20All%20rights%20reserved."
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
-      allowfullscreen
-    ></iframe>
-  </div>
+  <div id="player"></div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const player = new Kinescope.Player({
+        container: '#player',
+        videoId: 'tS6ERUjiNAGudSTffXB5ym',
+        params: {
+          autoplay: false,
+          watermark: '© 2025 BankWiseTrading. All rights reserved.',
+          controls: true,
+          muted: false
+        }
+      });
+
+      // Optionally, log when fullscreen is toggled
+      player.on('fullscreenChange', () => {
+        console.log('Fullscreen changed');
+      });
+    });
+  </script>
 </body>
 </html>
