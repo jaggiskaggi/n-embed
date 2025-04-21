@@ -2,18 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Embed</title>
+  <title>Notion Kinescope Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>body,html{margin:0;padding:0;height:100%}</style>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #player-container {
+      position: relative;
+      padding-bottom: 56.25%;  /* 16:9 */
+      height: 0;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    #kinescope-player {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+  </style>
 </head>
 <body>
-  <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
-    <iframe
-      src="https://kinescope.io/rNCaXiEVToaXF9aYAbdxTA/plVtVzaH"
-      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
-      allowfullscreen>
-    </iframe>
+  <div id="player-container">
+    <div id="kinescope-player"></div>
   </div>
+
+  <script>
+    // 1) Load the Kinescope iframe player API
+    (function() {
+      var tag = document.createElement('script');
+      tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+      var first = document.getElementsByTagName('script')[0];
+      first.parentNode.insertBefore(tag, first);
+    })();
+
+    // 2) Wait for the API to call this
+    function onKinescopeIframeAPIReady(playerFactory) {
+      // Pull the video ID (and optional watermark text) from ?id=…&wm=…
+      var params = new URLSearchParams(location.search);
+      var vid    = params.get('id') || '';
+      var wmText = params.get('wm') || '© 2025 BankWiseTrading – All rights reserved.';
+
+      if (!vid) {
+        console.error('No video ID supplied. Use ?id=YOUR_VIDEO_ID');
+        return;
+      }
+
+      playerFactory
+        .create('kinescope-player', {
+          url: 'https://kinescope.io/' + vid,
+          size: { width: '100%', height: '100%' },
+          ui: {
+            watermark: { enabled: true, text: wmText },
+            controls: true,
+            mainPlayButton: true
+          }
+        })
+        .then(function(player) {
+          player.once(player.Events.Ready, function() {
+            console.log('Kinescope player is ready for video', vid);
+          });
+        })
+        .catch(function(err) {
+          console.error('Kinescope embed error:', err);
+        });
+    }
+  </script>
 </body>
 </html>
