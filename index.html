@@ -17,6 +17,7 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
+      background: #000;       /* helps visualize if it ever resizes */
     }
   </style>
 </head>
@@ -25,46 +26,44 @@
     <div id="kinescope-player"></div>
   </div>
 
+  <!-- 1) Load the iframe API -->
   <script>
-    // 1) Load the Kinescope iframe player API
-    (function() {
-      var tag = document.createElement('script');
-      tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
-      var first = document.getElementsByTagName('script')[0];
-      first.parentNode.insertBefore(tag, first);
-    })();
+    console.log('[n-embed] injecting kinescope script…');
+    var tag = document.createElement('script');
+    tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+    tag.onload = function() { console.log('[n-embed] kinescope script loaded'); };
+    tag.onerror = function(e) { console.error('[n-embed] failed loading kinescope script', e); };
+    document.head.appendChild(tag);
 
-    // 2) Wait for the API to call this
-    function onKinescopeIframeAPIReady(playerFactory) {
-      // Pull the video ID (and optional watermark text) from ?id=…&wm=…
-      var params = new URLSearchParams(location.search);
-      var vid    = params.get('id') || '';
-      var wmText = params.get('wm') || '© 2025 BankWiseTrading – All rights reserved.';
-
+    // 2) Expose the callback explicitly on window
+    window.onKinescopeIframeAPIReady = function(playerFactory) {
+      console.log('[n-embed] onKinescopeIframeAPIReady fired', playerFactory);
+      var params = new URLSearchParams(window.location.search);
+      var vid    = params.get('id');
       if (!vid) {
-        console.error('No video ID supplied. Use ?id=YOUR_VIDEO_ID');
+        console.error('[n-embed] no ?id= in URL!');
         return;
       }
-
       playerFactory
         .create('kinescope-player', {
-          url: 'https://kinescope.io/' + vid,
-          size: { width: '100%', height: '100%' },
+          url:        'https://kinescope.io/' + vid,
+          size:       { width: '100%', height: '100%' },
           ui: {
-            watermark: { enabled: true, text: wmText },
-            controls: true,
+            watermark:    { enabled: true, text: '© 2025 BankWiseTrading' },
+            controls:     true,
             mainPlayButton: true
           }
         })
         .then(function(player) {
+          console.log('[n-embed] player.create() resolved', player);
           player.once(player.Events.Ready, function() {
-            console.log('Kinescope player is ready for video', vid);
+            console.log('[n-embed] Player Ready Event');
           });
         })
         .catch(function(err) {
-          console.error('Kinescope embed error:', err);
+          console.error('[n-embed] player.create() failed:', err);
         });
-    }
+    };
   </script>
 </body>
 </html>
