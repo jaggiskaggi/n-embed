@@ -2,66 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Embed w/Watermark</title>
+  <title>Notion Embed with Watermark</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body, html { margin:0; padding:0; height:100%; }
-    #kinescope-container { position:relative; padding-bottom:56.25%; height:0; overflow:hidden; }
-    #kinescope-player  { position:absolute; top:0; left:0; width:100%; height:100%; }
-    .error { padding:1em; font-family:sans-serif; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #player-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+    }
+    #kinescope-player {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
   </style>
 </head>
-<body>
 
-  <div id="kinescope-container">
+<body>
+  <div id="player-container">
     <div id="kinescope-player"></div>
   </div>
-  <noscript>
-    <p class="error">JavaScript is required to load this player.</p>
-  </noscript>
 
+  <!-- 1. Load the Kinescope iframe API -->
+  <script src="https://player.kinescope.io/latest/iframe.player.js"></script>
   <script>
-    // 1) grab video ID from ?video=…
-    const params  = new URLSearchParams(window.location.search);
-    const videoId = params.get('video');
-    if (!videoId) {
-      document.body.innerHTML = '<p class="error">No video specified. Use ?video=YOUR_ID</p>';
-      throw new Error('No video ID');
-    }
-
-    // 2) inject the iframe-player JS
-    (function() {
-      const tag = document.createElement('script');
-      tag.src   = 'https://player.kinescope.io/latest/iframe.player.js';
-      const first = document.getElementsByTagName('script')[0];
-      first.parentNode.insertBefore(tag, first);
-    })();
-
-    // 3) when the API loads, create your player with watermark
-    function onKinescopeIframeAPIReady(playerFactory) {
-      playerFactory
-        .create('kinescope-player', {
-          url:  'https://kinescope.io/' + encodeURIComponent(videoId),
+    // 2. Grab the video ID from ?video= in the URL
+    const vid = new URLSearchParams(window.location.search).get('video');
+    if (!vid) {
+      document.getElementById('player-container')
+              .innerHTML = '<p style="padding:1em;">No video specified.</p>';
+    } else {
+      // 3. Wait for the API to be ready, then create your player with watermark
+      window.onKinescopeIframeAPIReady = function(playerFactory) {
+        playerFactory.create('kinescope-player', {
+          url: `https://kinescope.io/${vid}`,
           size: { width: '100%', height: '100%' },
           ui: {
             watermark: {
               enabled: true,
-              text:    '© 2025 BankWiseTrading. All rights reserved.'
+              text: '© 2025 BankWiseTrading. All rights reserved.'
             },
-            controls:       true,
+            controls: true,
             mainPlayButton: true
           }
         })
         .then(player => {
-          player.once(player.Events.Ready, () =>
-            console.log('✅ Kinescope player ready for', videoId)
-          );
-        })
-        .catch(err => {
-          console.error('Player failed to initialize:', err);
+          player.once(player.Events.Ready, () => {
+            console.log('Player ready with watermark');
+          });
         });
+      };
     }
   </script>
-
 </body>
 </html>
