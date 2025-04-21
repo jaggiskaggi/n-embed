@@ -2,68 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Kinescope Embed</title>
+  <title>Notion Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
-    #player-container {
-      position: relative;
-      padding-bottom: 56.25%;  /* 16:9 */
-      height: 0;
-      overflow: hidden;
-      max-width: 100%;
-    }
-    #kinescope-player {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #000;       /* helps visualize if it ever resizes */
-    }
-  </style>
+  <style>body,html{margin:0;padding:0;height:100%}</style>
 </head>
 <body>
-  <div id="player-container">
-    <div id="kinescope-player"></div>
-  </div>
+  <div id="player" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"></div>
 
-  <!-- 1) Load the iframe API -->
   <script>
-    console.log('[n-embed] injecting kinescope script…');
-    var tag = document.createElement('script');
-    tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
-    tag.onload = function() { console.log('[n-embed] kinescope script loaded'); };
-    tag.onerror = function(e) { console.error('[n-embed] failed loading kinescope script', e); };
-    document.head.appendChild(tag);
-
-    // 2) Expose the callback explicitly on window
-    window.onKinescopeIframeAPIReady = function(playerFactory) {
-      console.log('[n-embed] onKinescopeIframeAPIReady fired', playerFactory);
-      var params = new URLSearchParams(window.location.search);
-      var vid    = params.get('id');
-      if (!vid) {
-        console.error('[n-embed] no ?id= in URL!');
-        return;
-      }
-      playerFactory
-        .create('kinescope-player', {
-          url:        'https://kinescope.io/' + vid,
-          size:       { width: '100%', height: '100%' },
-          ui: {
-            watermark:    { enabled: true, text: '© 2025 BankWiseTrading' },
-            controls:     true,
-            mainPlayButton: true
-          }
-        })
-        .then(function(player) {
-          console.log('[n-embed] player.create() resolved', player);
-          player.once(player.Events.Ready, function() {
-            console.log('[n-embed] Player Ready Event');
-          });
-        })
-        .catch(function(err) {
-          console.error('[n-embed] player.create() failed:', err);
-        });
-    };
+    // parse `?video=<ID>` from the URL
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get('video');
+    if (!videoId) {
+      document.body.innerHTML = '<p style="padding:1em;">No video specified.</p>';
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://kinescope.io/embed/' + encodeURIComponent(videoId);
+      iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;';
+      iframe.frameBorder = '0';
+      iframe.allowFullscreen = true;
+      iframe.style = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0';
+      document.getElementById('player').appendChild(iframe);
+    }
   </script>
 </body>
 </html>
