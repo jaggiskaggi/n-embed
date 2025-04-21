@@ -2,28 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Embed</title>
+  <title>Notion Kinescope Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    html, body { margin:0; padding:0; height:100%; }
+    body, html { margin: 0; padding: 0; height: 100%; }
     #player-container {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 56.25%;  /* 16:9 */
       height: 0;
       overflow: hidden;
       max-width: 100%;
     }
     #kinescope-player {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    #error {
-      padding:1em;
-      font-family: sans-serif;
-      color: #c00;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;       /* helps visualize if it ever resizes */
     }
   </style>
 </head>
@@ -31,55 +25,45 @@
   <div id="player-container">
     <div id="kinescope-player"></div>
   </div>
-  <div id="error" style="display:none;"></div>
 
+  <!-- 1) Load the iframe API -->
   <script>
-    (function(){
-      // 1) read video ID
-      const params   = new URLSearchParams(window.location.search);
-      const videoId  = params.get('video');
-      if (!videoId) {
-        document.getElementById('player-container').style.display = 'none';
-        const err = document.getElementById('error');
-        err.textContent = 'Error: No video specified.';
-        err.style.display = 'block';
+    console.log('[n-embed] injecting kinescope script…');
+    var tag = document.createElement('script');
+    tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+    tag.onload = function() { console.log('[n-embed] kinescope script loaded'); };
+    tag.onerror = function(e) { console.error('[n-embed] failed loading kinescope script', e); };
+    document.head.appendChild(tag);
+
+    // 2) Expose the callback explicitly on window
+    window.onKinescopeIframeAPIReady = function(playerFactory) {
+      console.log('[n-embed] onKinescopeIframeAPIReady fired', playerFactory);
+      var params = new URLSearchParams(window.location.search);
+      var vid    = params.get('id');
+      if (!vid) {
+        console.error('[n-embed] no ?id= in URL!');
         return;
       }
-
-      // 2) expose the API callback
-      window.onKinescopeIframeAPIReady = (playerFactory) => {
-        playerFactory
-          .create('kinescope-player', {
-            url:   `https://kinescope.io/${videoId}`,
-            size:  { width: '100%', height: '100%' },
-            ui: {
-              watermark: {
-                enabled: true,
-                text:    '© 2025 BankWiseTrading. All rights reserved.'
-              },
-              controls:        true,
-              mainPlayButton:  true
-            }
-          })
-          .then(player => {
-            player.once(player.Events.Ready, () => {
-              console.log('🎬 Kinescope player ready');
-            });
-          })
-          .catch(err => {
-            console.error(err);
-            document.getElementById('player-container').style.display = 'none';
-            const e = document.getElementById('error');
-            e.textContent = 'Playback error: ' + err.message;
-            e.style.display = 'block';
+      playerFactory
+        .create('kinescope-player', {
+          url:        'https://kinescope.io/' + vid,
+          size:       { width: '100%', height: '100%' },
+          ui: {
+            watermark:    { enabled: true, text: '© 2025 BankWiseTrading' },
+            controls:     true,
+            mainPlayButton: true
+          }
+        })
+        .then(function(player) {
+          console.log('[n-embed] player.create() resolved', player);
+          player.once(player.Events.Ready, function() {
+            console.log('[n-embed] Player Ready Event');
           });
-      };
-
-      // 3) load the iframe API
-      const tag = document.createElement('script');
-      tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
-      document.head.appendChild(tag);
-    })();
+        })
+        .catch(function(err) {
+          console.error('[n-embed] player.create() failed:', err);
+        });
+    };
   </script>
 </body>
 </html>
