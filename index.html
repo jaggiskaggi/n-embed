@@ -1,38 +1,7 @@
-<!-- Responsive container for the player -->
-<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
-  <div id="kinescope-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-</div>
-
-<script>
-  // Load the Kinescope player API
-  (function() {
-    var tag = document.createElement('script');
-    tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-  })();
-  
-  // Initialize player when API is ready
-  function onKinescopeIframeAPIReady(playerFactory) {
-    // Create the player with secure watermark configuration
-    playerFactory
-      .create('kinescope-player', {
-        url: 'https://kinescope.io/tS6ERUjiNAGudSTffXB5ym', // Your video ID
-        size: { width: '100%', height: '100%' },
-        ui: {
-          watermark: {
-            enabled: true,
-            text: '© 2025 BankWiseTrading. All rights reserved.'  // Your watermark text
-          },
-          controls: true,
-          mainPlayButton: true
-        }
-      })
-      .then(function(player) {
-        // Player is ready
-        player.once(player.Events.Ready, function() {
-          console.log('Player is ready');
-        });
-      });
-  }
-</script>
+<iframe
+  src="https://kinescope.io/embed/tS6ERUjiNAGudSTffXB5ym?watermark=©%202025%20BankWiseTrading.%20All%20rights%20reserved."
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
+  frameborder="0"
+  allowfullscreen
+  style="width:100%; height:100%; border:0;"
+></iframe>
