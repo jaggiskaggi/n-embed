@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Kinescope Embed</title>
+  <title>Notion Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
+    html, body { margin:0; padding:0; height:100%; }
     #player-container {
       position: relative;
-      padding-bottom: 56.25%;  /* 16:9 */
+      padding-bottom: 56.25%; /* 16:9 aspect */
       height: 0;
       overflow: hidden;
       max-width: 100%;
@@ -17,7 +17,12 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: #000;       /* helps visualize if it ever resizes */
+    }
+    #error {
+      display: none;
+      padding: 1em;
+      font-family: sans-serif;
+      color: #c00;
     }
   </style>
 </head>
@@ -25,45 +30,56 @@
   <div id="player-container">
     <div id="kinescope-player"></div>
   </div>
+  <div id="error"></div>
 
-  <!-- 1) Load the iframe API -->
   <script>
-    console.log('[n-embed] injecting kinescope script…');
-    var tag = document.createElement('script');
-    tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
-    tag.onload = function() { console.log('[n-embed] kinescope script loaded'); };
-    tag.onerror = function(e) { console.error('[n-embed] failed loading kinescope script', e); };
-    document.head.appendChild(tag);
-
-    // 2) Expose the callback explicitly on window
-    window.onKinescopeIframeAPIReady = function(playerFactory) {
-      console.log('[n-embed] onKinescopeIframeAPIReady fired', playerFactory);
-      var params = new URLSearchParams(window.location.search);
-      var vid    = params.get('id');
-      if (!vid) {
-        console.error('[n-embed] no ?id= in URL!');
+    (function(){
+      const params  = new URLSearchParams(window.location.search);
+      const videoId = params.get('video');
+      if (!videoId) {
+        document.getElementById('player-container').style.display = 'none';
+        const e = document.getElementById('error');
+        e.textContent = 'Error: No video specified.';
+        e.style.display   = 'block';
         return;
       }
-      playerFactory
-        .create('kinescope-player', {
-          url:        'https://kinescope.io/' + vid,
-          size:       { width: '100%', height: '100%' },
+
+      // 1) Define the API callback BEFORE loading the script:
+      window.onKinescopeIframeAPIReady = (playerFactory) => {
+        playerFactory.create('kinescope-player', {
+          url: `https://kinescope.io/${videoId}`,
+          size: { width: '100%', height: '100%' },
           ui: {
-            watermark:    { enabled: true, text: '© 2025 BankWiseTrading' },
-            controls:     true,
-            mainPlayButton: true
+            controls:       true,
+            mainPlayButton: true,
+            watermark: {
+              enabled:       true,
+              text:          '© 2025 BankWiseTrading. All rights reserved.',
+              mode:          'always',              // never hide or move
+              scale:         1,                     // full‑size text
+              displayTimeout:{ visible: 0, hidden: 0 } // 0 = permanent
+            }
           }
         })
-        .then(function(player) {
-          console.log('[n-embed] player.create() resolved', player);
-          player.once(player.Events.Ready, function() {
-            console.log('[n-embed] Player Ready Event');
-          });
+        .then(player => {
+          player.once(player.Events.Ready, () =>
+            console.log('🎬 Player ready with persistent watermark')
+          );
         })
-        .catch(function(err) {
-          console.error('[n-embed] player.create() failed:', err);
+        .catch(err => {
+          console.error(err);
+          document.getElementById('player-container').style.display = 'none';
+          const e = document.getElementById('error');
+          e.textContent = 'Playback error: ' + err.message;
+          e.style.display = 'block';
         });
-    };
+      };
+
+      // 2) Then load the Iframe API:
+      const tag = document.createElement('script');
+      tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+      document.head.appendChild(tag);
+    })();
   </script>
 </body>
 </html>
