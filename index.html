@@ -1,126 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Notion Embed w/ Watermark</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <title>Notion Embed w/Watermark</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* full‑bleed reset */
-    html, body { margin: 0; padding: 0; height: 100%; }
-
-    /* responsive 16:9 container */
-    #player-container {
-      position: relative;
-      padding-bottom: 56.25%; /* 16:9 ratio */
-      height: 0;
-      overflow: hidden;
-      max-width: 100%;
-      background: #000; /* in case video is still loading */
-    }
-
-    /* where Kinescope will inject its <iframe> */
-    #kinescope-player {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-    }
-
-    /* CSS fallback watermark */
-    #css-watermark {
-      position: absolute;
-      bottom: 8px; right: 12px;
-      padding: 4px 8px;
-      font-family: sans-serif;
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.7);
-      background: rgba(0,0,0,0.3);
-      pointer-events: none;
-      z-index: 10;
-      white-space: nowrap;
-    }
-
-    /* error box */
-    #error {
-      padding: 1em;
-      font-family: sans-serif;
-      color: #c00;
-    }
+    body, html { margin:0; padding:0; height:100%; }
+    #kinescope-container { position:relative; padding-bottom:56.25%; height:0; overflow:hidden; }
+    #kinescope-player  { position:absolute; top:0; left:0; width:100%; height:100%; }
+    .error { padding:1em; font-family:sans-serif; }
   </style>
 </head>
 <body>
-  <div id="player-container">
-    <div id="kinescope-player"></div>
-    <!-- fallback watermark in case the API one doesn’t show -->
-    <div id="css-watermark" style="display:none;">
-      © 2025 BankWiseTrading. All rights reserved.
-    </div>
-  </div>
 
-  <div id="error" style="display:none;"></div>
+  <div id="kinescope-container">
+    <div id="kinescope-player"></div>
+  </div>
+  <noscript>
+    <p class="error">JavaScript is required to load this player.</p>
+  </noscript>
 
   <script>
+    // 1) grab video ID from ?video=…
+    const params  = new URLSearchParams(window.location.search);
+    const videoId = params.get('video');
+    if (!videoId) {
+      document.body.innerHTML = '<p class="error">No video specified. Use ?video=YOUR_ID</p>';
+      throw new Error('No video ID');
+    }
+
+    // 2) inject the iframe-player JS
     (function() {
-      // 1) Grab videoId from ?video= query param
-      const params  = new URLSearchParams(window.location.search);
-      const vid     = params.get('video');
-      if (!vid) {
-        document.getElementById('player-container').style.display = 'none';
-        const err = document.getElementById('error');
-        err.textContent = 'Error: no video specified.';
-        err.style.display = 'block';
-        return;
-      }
-
-      // 2) Expose API callback **before** script loads
-      window.onKinescopeIframeAPIReady = (factory) => {
-        factory
-          .create('kinescope-player', {
-            url:  `https://kinescope.io/${vid}`,
-            size: { width: '100%', height: '100%' },
-            ui: {
-              watermark: {
-                enabled: true,
-                text:    '© 2025 BankWiseTrading. All rights reserved.'
-              },
-              controls:       true,
-              mainPlayButton: true
-            }
-          })
-          .then(player => {
-            // if the API watermark never shows within a couple seconds, show our CSS one
-            const wm = document.getElementById('css-watermark');
-            setTimeout(() => {
-              // check for its existence inside the iframe
-              // (if it’s not there, show our fallback)
-              player.getCurrentTime().then(() => {
-                // assume player loaded OK
-                // try to locate the API watermark element
-                const doc = player._iframe.contentDocument;
-                if (!doc.querySelector('.kinescope-watermark')) {
-                  wm.style.display = 'block';
-                }
-              });
-            }, 2000);
-
-            player.once(player.Events.Ready, () => {
-              console.log('🎬 Player ready with watermark');
-            });
-          })
-          .catch(err => {
-            console.error(err);
-            document.getElementById('player-container').style.display = 'none';
-            const e = document.getElementById('error');
-            e.textContent = 'Playback error: ' + err.message;
-            e.style.display = 'block';
-          });
-      };
-
-      // 3) Load a fixed API version so behavior stays predictable
       const tag = document.createElement('script');
-      tag.src = 'https://player.kinescope.io/v2.18.17/iframe.player.js';
-      document.head.appendChild(tag);
-
+      tag.src   = 'https://player.kinescope.io/latest/iframe.player.js';
+      const first = document.getElementsByTagName('script')[0];
+      first.parentNode.insertBefore(tag, first);
     })();
+
+    // 3) when the API loads, create your player with watermark
+    function onKinescopeIframeAPIReady(playerFactory) {
+      playerFactory
+        .create('kinescope-player', {
+          url:  'https://kinescope.io/' + encodeURIComponent(videoId),
+          size: { width: '100%', height: '100%' },
+          ui: {
+            watermark: {
+              enabled: true,
+              text:    '© 2025 BankWiseTrading. All rights reserved.'
+            },
+            controls:       true,
+            mainPlayButton: true
+          }
+        })
+        .then(player => {
+          player.once(player.Events.Ready, () =>
+            console.log('✅ Kinescope player ready for', videoId)
+          );
+        })
+        .catch(err => {
+          console.error('Player failed to initialize:', err);
+        });
+    }
   </script>
+
 </body>
 </html>
