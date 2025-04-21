@@ -4,26 +4,82 @@
   <meta charset="utf-8">
   <title>Notion Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>body,html{margin:0;padding:0;height:100%}</style>
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    #player-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    #kinescope-player {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #error {
+      padding:1em;
+      font-family: sans-serif;
+      color: #c00;
+    }
+  </style>
 </head>
 <body>
-  <div id="player" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"></div>
+  <div id="player-container">
+    <div id="kinescope-player"></div>
+  </div>
+  <div id="error" style="display:none;"></div>
 
   <script>
-    // parse `?video=<ID>` from the URL
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get('video');
-    if (!videoId) {
-      document.body.innerHTML = '<p style="padding:1em;">No video specified.</p>';
-    } else {
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://kinescope.io/embed/' + encodeURIComponent(videoId);
-      iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;';
-      iframe.frameBorder = '0';
-      iframe.allowFullscreen = true;
-      iframe.style = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0';
-      document.getElementById('player').appendChild(iframe);
-    }
+    (function(){
+      // 1) read video ID
+      const params   = new URLSearchParams(window.location.search);
+      const videoId  = params.get('video');
+      if (!videoId) {
+        document.getElementById('player-container').style.display = 'none';
+        const err = document.getElementById('error');
+        err.textContent = 'Error: No video specified.';
+        err.style.display = 'block';
+        return;
+      }
+
+      // 2) expose the API callback
+      window.onKinescopeIframeAPIReady = (playerFactory) => {
+        playerFactory
+          .create('kinescope-player', {
+            url:   `https://kinescope.io/${videoId}`,
+            size:  { width: '100%', height: '100%' },
+            ui: {
+              watermark: {
+                enabled: true,
+                text:    '© 2025 BankWiseTrading. All rights reserved.'
+              },
+              controls:        true,
+              mainPlayButton:  true
+            }
+          })
+          .then(player => {
+            player.once(player.Events.Ready, () => {
+              console.log('🎬 Kinescope player ready');
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            document.getElementById('player-container').style.display = 'none';
+            const e = document.getElementById('error');
+            e.textContent = 'Playback error: ' + err.message;
+            e.style.display = 'block';
+          });
+      };
+
+      // 3) load the iframe API
+      const tag = document.createElement('script');
+      tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+      document.head.appendChild(tag);
+    })();
   </script>
 </body>
 </html>
