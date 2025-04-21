@@ -1,73 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BankWiseTrading Video</title>
-  <style>
-    body, html {
-      margin: 0; padding: 0;
-      background: #000;
-      height: 100%;
-      overflow: hidden;
-    }
-    /* 16:9 wrapper for normal embed size */
-    .video-wrapper {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%; /* 9/16 = 0.5625 */
-      height: 0;
-      overflow: hidden;
-    }
-    #kinescope-player {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-    }
-    /* full‑viewport mode (switched on fullscreen enter) */
-    .video-wrapper.fullscreen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      padding-top: 0;
-      z-index: 9999;
-    }
-  </style>
+  <meta charset="utf-8">
+  <title>Notion Embed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>body,html{margin:0;padding:0;height:100%}</style>
 </head>
 <body>
-  <div class="video-wrapper" id="wrapper">
-    <div id="kinescope-player"></div>
-  </div>
+  <div id="player" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"></div>
 
-  <!-- Load the secure iframe API -->
-  <script src="https://player.kinescope.io/latest/iframe.player.js" async></script>
   <script>
-    // Called by the kinescope script when ready
-    function onKinescopeIframeAPIReady(playerFactory) {
-      playerFactory
-        .create('kinescope-player', {
-          url:  'https://kinescope.io/tS6ERUjiNAGudSTffXB5ym',
-          size: { width: '100%', height: '100%' },
-          ui: {
-            watermark: {
-              enabled: true,
-              text:    '© 2025 BankWiseTrading. All rights reserved.'
-            },
-            controls:       true,
-            mainPlayButton: true
-          }
-        })
-        .then(player => {
-          const wrapper = document.getElementById('wrapper');
-
-          // Listen for fullscreen changes
-          player.on(player.Events.FullscreenChange, () => {
-            // If the iframe itself is now fullscreen
-            const isFs = document.fullscreenElement &&
-                         document.fullscreenElement.tagName === 'IFRAME';
-            wrapper.classList.toggle('fullscreen', isFs);
-          });
-        });
+    // parse `?video=<ID>` from the URL
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get('video');
+    if (!videoId) {
+      document.body.innerHTML = '<p style="padding:1em;">No video specified.</p>';
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://kinescope.io/embed/' + encodeURIComponent(videoId);
+      iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;';
+      iframe.frameBorder = '0';
+      iframe.allowFullscreen = true;
+      iframe.style = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0';
+      document.getElementById('player').appendChild(iframe);
     }
   </script>
 </body>
