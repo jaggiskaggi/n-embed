@@ -1,59 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BankWise Kinescope Embed</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BankWiseTrading Video</title>
   <style>
-    body {
-      margin: 0;
-      background: black;
+    body, html {
+      margin: 0; padding: 0;
+      background: #000;
+      height: 100%;
+      overflow: hidden;
     }
+    /* 16:9 wrapper for normal embed size */
     .video-wrapper {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      width: 100%;
+      padding-top: 56.25%; /* 9/16 = 0.5625 */
       height: 0;
       overflow: hidden;
-      max-width: 100%;
     }
     #kinescope-player {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    /* full‑viewport mode (switched on fullscreen enter) */
+    .video-wrapper.fullscreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      padding-top: 0;
+      z-index: 9999;
     }
   </style>
 </head>
 <body>
-  <div class="video-wrapper">
+  <div class="video-wrapper" id="wrapper">
     <div id="kinescope-player"></div>
   </div>
 
+  <!-- Load the secure iframe API -->
+  <script src="https://player.kinescope.io/latest/iframe.player.js" async></script>
   <script>
-    (function() {
-      const script = document.createElement('script');
-      script.src = 'https://player.kinescope.io/latest/iframe.player.js';
-      document.head.appendChild(script);
-    })();
-
+    // Called by the kinescope script when ready
     function onKinescopeIframeAPIReady(playerFactory) {
       playerFactory
         .create('kinescope-player', {
-          url: 'https://kinescope.io/tS6ERUjiNAGudSTffXB5ym',
+          url:  'https://kinescope.io/tS6ERUjiNAGudSTffXB5ym',
           size: { width: '100%', height: '100%' },
           ui: {
             watermark: {
               enabled: true,
-              text: '© 2025 BankWiseTrading. All rights reserved.'
+              text:    '© 2025 BankWiseTrading. All rights reserved.'
             },
-            controls: true,
+            controls:       true,
             mainPlayButton: true
           }
         })
-        .then(function(player) {
-          player.once(player.Events.Ready, function() {
-            console.log('Player is ready');
+        .then(player => {
+          const wrapper = document.getElementById('wrapper');
+
+          // Listen for fullscreen changes
+          player.on(player.Events.FullscreenChange, () => {
+            // If the iframe itself is now fullscreen
+            const isFs = document.fullscreenElement &&
+                         document.fullscreenElement.tagName === 'IFRAME';
+            wrapper.classList.toggle('fullscreen', isFs);
           });
         });
     }
