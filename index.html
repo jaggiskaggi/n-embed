@@ -1,56 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Notion Embed with Watermark</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #player-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
-    #kinescope-player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-  </style>
-</head>
-<body>
-  <div id="player-container">
-    <div id="kinescope-player"></div>
-  </div>
-
-  <!-- 1. Load the Iframe API asynchronously -->
-  <script async src="https://player.kinescope.io/latest/iframe.player.js"></script>
-  <script>
-    // 2. Grab the video ID
-    const vid = new URLSearchParams(window.location.search).get('video');
-    if (!vid) {
-      document.getElementById('player-container')
-              .innerHTML = '<p style="padding:1em;">No video specified.</p>';
-    } else {
-      // 3. Create the player with an explicit watermark config
-      window.onKinescopeIframeAPIReady = function(playerFactory) {
-        playerFactory.create('kinescope-player', {
-          url: `https://kinescope.io/${vid}`,
-          size: { width: '100%', height: '100%' },
-          ui: {
-            watermark: {
-              enabled: true,
-              text: '© 2025 BankWiseTrading. All rights reserved.',
-              mode: 'random',                  // 'random', 'static' or 'text'
-              scale: 1,                        // 1 = 100% size, 0.5 = 50%
-              displayTimeout: {                // how long it stays visible/hidden
-                visible: 10000,               // ms watermark is on‑screen
-                hidden: 2000                 // ms between appearances
-              }
-            },
-            controls: true,
-            mainPlayButton: true
-          }
-        })
-        .then(player => {
-          player.once(player.Events.Ready, () => {
-            console.log('Player ready with watermark');
-          });
-        });
-      };
-    }
-  </script>
-</body>
-</html>
+<iframe
+  src="https://kinescope.io/embed/tS6ERUjiNAGudSTffXB5ym?watermark=©%202025%20BankWiseTrading.%20All%20rights%20reserved."
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
+  frameborder="0"
+  allowfullscreen
+  style="width:100%; height:100%; border:0;"
+></iframe>
