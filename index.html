@@ -2,85 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Notion Embed with Custom Fullscreen</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #player-container {
-      position: relative;
-      padding-bottom: 56.25%; /* 16:9 ratio */
-      height: 0;
-      overflow: hidden;
-      max-width: 100%;
-    }
-    #kinescope-player {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-    }
-    /* Attempt to hide any native fullscreen button inside the player */
-    #kinescope-player video::-webkit-media-controls-fullscreen-button {
-      display: none !important;
-    }
-    /* Your overlay watermark CSS is inside the player via the API */
-    /* Fullscreen toggle button */
-    #fs-button {
-      position: absolute;
-      top: 10px; left: 10px;
-      z-index: 20;
-      padding: 6px 12px;
-      font-size: 14px;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    html,body { margin:0;padding:0;height:100%; }
+    #container { position:relative;padding-bottom:56.25%;height:0;overflow:hidden; }
+    #kinescope-player { position:absolute;top:0;left:0;width:100%;height:100%; }
   </style>
 </head>
 <body>
-  <div id="player-container">
+  <div id="container">
     <div id="kinescope-player"></div>
-    <button id="fs-button">⛶ Fullscreen</button>
   </div>
-
-  <!-- 1) Load the Kinescope Iframe API -->
   <script async src="https://player.kinescope.io/latest/iframe.player.js"></script>
   <script>
-    // 2) Grab your video ID from ?video= in the URL
-    const params = new URLSearchParams(window.location.search);
-    const vid = params.get('video');
-    if (!vid) {
-      document.getElementById('player-container')
-              .innerHTML = '<p style="padding:1em;">No video specified.</p>';
-    } else {
-      // 3) Initialize the player with watermark
-      window.onKinescopeIframeAPIReady = function(playerFactory) {
-        playerFactory.create('kinescope-player', {
-          url: `https://kinescope.io/${vid}`,
-          size: { width: '100%', height: '100%' },
+    const id = new URLSearchParams(location.search).get('video');
+    if (!id) { container.textContent = 'No video.'; }
+    else {
+      window.onKinescopeIframeAPIReady = (factory) => {
+        factory.create('kinescope-player', {
+          url: `https://kinescope.io/${id}`,
+          size: { width:'100%', height:'100%' },
           ui: {
             watermark: {
               enabled: true,
               text: '© 2025 BankWiseTrading. All rights reserved.',
-              mode: 'static',        // or 'random'
-              scale: 1,
-              displayTimeout: { visible: 10000, hidden: 2000 }
+              mode: 'static',
+              scale: 1
             },
             controls: true,
             mainPlayButton: true
           }
-        }).then(player => {
-          // 4) Hook up your custom fullscreen toggle
-          const fsBtn = document.getElementById('fs-button');
-          fsBtn.addEventListener('click', () => {
-            const container = document.getElementById('player-container');
-            if (!document.fullscreenElement) {
-              (container.requestFullscreen || container.webkitRequestFullscreen).call(container);
-            } else {
-              (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-            }
-          });
         });
       };
     }
